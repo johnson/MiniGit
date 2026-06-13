@@ -55,9 +55,11 @@ struct OIDCompare
 {
     if (!libgit2_initialized) {
         git_libgit2_init();
-        // Required for thread-safe OpenSSL usage (libgit2 1.5+ handles this internally,
-        // but explicit call ensures correct multi-threaded TLS behavior on iOS)
         git_openssl_set_locking();
+        // Set network timeouts so fetch/push never hang indefinitely on iOS.
+        // connect timeout: 30s, data transfer timeout: 60s
+        git_libgit2_opts(GIT_OPT_SET_SERVER_CONNECT_TIMEOUT, 30000);
+        git_libgit2_opts(GIT_OPT_SET_SERVER_TIMEOUT, 60000);
         libgit2_initialized = true;
     }
 
