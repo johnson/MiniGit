@@ -13,6 +13,7 @@
 #import "Repository.h"
 
 #import "git2.h"
+#import "git2/sys/openssl.h"
 
 #import "internal/StringHelpers.mm"
 
