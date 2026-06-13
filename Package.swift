@@ -33,10 +33,11 @@ let package = Package(
             name: "MiniGit",
             dependencies: ["XGit"],
             linkerSettings: [.linkedLibrary("z"), .linkedLibrary("iconv")]),
+        // libgit2 1.9.0 + OpenSSL 3.3.2 for iOS arm64
+        // Replaces LibGit2-On-iOS v1.3.1 — fixes SecureTransport TLS failures on iOS 26/iPadOS 27
         .binaryTarget(
             name: "libgit2",
-            url: "https://github.com/light-tech/LibGit2-On-iOS/releases/download/v1.3.1/libgit2.xcframework.zip",
-            checksum: "332bfb255649f2295d5530e4abed4e81803acdc6abf18a266695fdb447ca3df2"),
+            path: "libgit2.xcframework"),
         .testTarget(
             name: "MiniGitTests",
             dependencies: ["MiniGit"]),

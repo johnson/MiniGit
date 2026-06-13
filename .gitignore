@@ -17,4 +17,3 @@ xcuserdata/
 !**/*.playground/playground.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
 
 .swiftpm/
-libgit2.xcframework/
