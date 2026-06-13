@@ -54,6 +54,10 @@ struct OIDCompare
 {
     if (!libgit2_initialized) {
         git_libgit2_init();
+        // Required for thread-safe OpenSSL usage (libgit2 1.5+ handles this internally,
+        // but explicit call ensures correct multi-threaded TLS behavior on iOS)
+        git_openssl_set_locking();
+        libgit2_initialized = true;
     }
 
     self->_pathToRepo = strdup([path UTF8String]);

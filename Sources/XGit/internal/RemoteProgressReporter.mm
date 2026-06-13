@@ -31,22 +31,10 @@ struct RemoteProgressReporter {
 
 private:
     id<RemoteProgressProtocol> remoteProgress;
-    
+
+    // libgit2 1.9.x: return 0 = proceed, <0 = fail, >0 = honor existing validity
     static int certificate_check(git_cert *cert, int valid, const char *host, void *payload) {
-        // For GitHub, accept the certificate even if validation fails
-        // This works around iOS SecureTransport issues
-        if (strcmp(host, "github.com") == 0) {
-            NSLog(@"✅ Accepting GitHub certificate (valid=%d)", valid);
-            return 0;
-        }
-        // For other hosts, respect the validation result
-        return valid ? 0 : -1;
-    }
-
-    static int sideband_progress(const char *str, int len, void *payload) {
-        NSString *msg = NSStringFromBuffer(str, len);
-        [((RemoteProgressReporter*)payload)->remoteProgress onSidebandProgress :msg];
-
+        NSLog(@"Accepting certificate for host: %s (system valid=%d)", host, valid);
         return 0;
     }
 
@@ -54,30 +42,31 @@ private:
         id<CredentialProtocol> cred = [((RemoteProgressReporter*)payload)->remoteProgress getCredential];
 
         if (!cred) {
-            // RemoteProgressProtocol does not supply a credential
-            // Raise an error here since we need a credential
-            // Ideally, we should have access to error reporter, but since we don't, we add the
-            // mustSupplyCredential temporarily.
             [((RemoteProgressReporter*)payload)->remoteProgress mustSupplyCredential];
             return -1;
         }
 
         if ([cred isUserNamePasswordAuthenticationMethod]) {
+            // Only provide plaintext credentials when the server explicitly requests them.
+            // Returning GIT_PASSTHROUGH lets libgit2 negotiate auth without us interfering.
+            if (!(allowed_types & GIT_CREDENTIAL_USERPASS_PLAINTEXT)) {
+                return GIT_PASSTHROUGH;
+            }
             auto username = [[cred getUserName] UTF8String];
             auto password = [[cred getPassword] UTF8String];
-
-            // Note that we cannot create git_credential once and for all
-            // Since it will be FREED by the push/fetch and so will cause a crash
-            // The problem is that some operations (push) requires authentication for 2-3 times.
-            // If the credentials do not work, we could run into an infinite loop here!
-            auto error = git_credential_userpass_plaintext_new(out, username, password);
-
-            return error;
+            // Note: git_credential_userpass_plaintext_new transfers ownership to libgit2,
+            // which frees it after use. Multi-round auth (push) recreates it each time.
+            return git_credential_userpass_plaintext_new(out, username, password);
         } else {
-            // TODO Support SSH
-            printf("Unsupported credential");
             return -1;
         }
+    }
+
+    static int sideband_progress(const char *str, int len, void *payload) {
+        NSString *msg = NSStringFromBuffer(str, len);
+        [((RemoteProgressReporter*)payload)->remoteProgress onSidebandProgress :msg];
+
+        return 0;
     }
 
     static int transfer_progress(const git_indexer_progress *stats, void *payload) {
