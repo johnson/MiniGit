@@ -24,7 +24,7 @@ public class SimpleErrorReceiver: ErrorReceiverProtocol, ObservableObject {
     }
 
     public func onError(_ code: Int32, _ error: GitError?, _ extra_message: String?) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             print("Error \(code): \(extra_message ?? "") \(error != nil ? error!.message : "")")
             if self.errorCode == nil {
                 self.errorCode = code

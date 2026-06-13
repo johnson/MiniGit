@@ -114,7 +114,7 @@ public class RemoteProgress: RemoteProgressProtocol, ObservableObject {
     }
 
     public func onComplete() {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.inProgress = false
             self.repo.onRepositoryExistenceChanged() // To refresh the hasRepo field after a successful clone
 
@@ -140,13 +140,13 @@ public class RemoteProgress: RemoteProgressProtocol, ObservableObject {
     }
 
     public func onSidebandProgress(_ message: String) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.messageFromRemote = "Remote: \(message)"
         }
     }
 
     public func onTransferProgress(_ total_objects: UInt32, _ indexed_objects: UInt32, _ received_objects: UInt32, _ local_objects: UInt32, _ total_deltas: UInt32, _ indexed_deltas: UInt32, _ received_bytes: Int) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.fetchTransferInProgress = true
             self.transferTotalObjects = total_objects
             self.transferIndexedObjects = indexed_objects
@@ -159,13 +159,13 @@ public class RemoteProgress: RemoteProgressProtocol, ObservableObject {
     }
 
     public func onUpdateTips(_ refname: String, _ a: OID, _ b: OID) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.updateTips.append(UpdateTip(refname: refname, a: a, b: b))
         }
     }
 
     public func onPackProgress(_ stage: Int32, _ current: UInt32, _ total: UInt32) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.packingInProgress = true
             self.packingStage = stage
             self.packingCurrent = current
@@ -174,7 +174,7 @@ public class RemoteProgress: RemoteProgressProtocol, ObservableObject {
     }
 
     public func onPushTransferProgress(_ current: UInt32, _ total: UInt32, _ bytes: Int) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.pushTransferInProgress = true
             self.pushTransferCurrent = current
             self.pushTransferTotal = total
@@ -183,13 +183,13 @@ public class RemoteProgress: RemoteProgressProtocol, ObservableObject {
     }
 
     public func onPushUpdateReference(_ refname: String, _ status: String?) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.pushUpdateRefs.append(PushUpdateRef(refname: refname, status: status))
         }
     }
 
     public func onPushNegotiation(_ updates: [PushUpdate]) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.pushUpdates = updates
 
             // If there is no update needed
